@@ -8,8 +8,9 @@ dev: lint test
 pr: init dev
 
 ENV = ${USER}
+AWS_ACCOUNT = $$(aws sts get-caller-identity | jq -r .Account)
 STACKNAME = $$(basename ${CURDIR})-$(ENV)
-BUCKET = $$(basename ${CURDIR})-package-bucket-$(ENV)
+BUCKET = $$(basename ${CURDIR})-package-bucket-$(ENV)-$(AWS_ACCOUNT)
 PACKAGED_TEMPLATE = .aws-sam/packaged-template.yaml
 EVENT_SOURCE = {{cookiecutter.event_source}}
 
