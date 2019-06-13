@@ -54,7 +54,7 @@ abbreviations:
 Create a new project by running the command below. This will ask you a series of questions and customize the generated project based on your answers.
 
 ```
-$ sam init --location gh:singlestone/aws-sam-tmpl-node10`.
+$ sam init --location gh:singlestone/aws-sam-tmpl-node10
 ```
 
 ## Options
