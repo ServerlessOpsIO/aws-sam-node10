@@ -1,0 +1,12 @@
+{
+  "name": "{{cookiecutter.function_name}}",
+  "version": "1.0.0",
+  "description": "{{cookiecutter.function_description}}",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "mocha tests/unit/"
+  }
+}
+

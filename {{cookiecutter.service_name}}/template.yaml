@@ -1,0 +1,687 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  {{cookiecutter.service_name}}
+
+  {{cookiecutter.service_description}}
+
+Parameters:
+  Environment:
+    Type: String
+    Description: "Name of deployment environment"
+
+  {{cookiecutter.function_name}}MemorySize:
+    Type: String
+    Description: "{{cookiecutter.function_name}} function memory size"
+    Default: 128
+
+  {{cookiecutter.function_name}}Timeout:
+    Type: String
+    Description: "{{cookiecutter.function_name}} function timeout"
+    Default: 3
+
+{%- if cookiecutter.event_source != "other" %}
+
+## Event source configuration
+{%- if cookiecutter.event_source == "cloudwatch-logs" %}
+  EventCloudwatchLogGroupName:
+    Type: String
+    Description: "Name of triggering log group"
+    #Default: <<LOGGROUP_NAME>>
+
+  # NOTE: A filterPattern is optional
+  #EventCloudwatchLogGroupFilterPattern:
+  #  Type: String
+  #  Default: <<FILTER_PATTERN>>
+{%- elif cookiecutter.event_source == "dynamodb" %}
+  EventDynamoDBStreamArn:
+    Type: String
+    Description: "ARN of stream"
+    #Default: <<required: STREAM_ARN>>
+
+  EventDynamoDBStreamStartingPosition:
+    Type: String
+    Description: "Stream starting position for function"
+    AllowedValues:
+      - 'LATEST'
+      - 'TRIM_HORIZON'
+    Default: 'LATEST'
+
+  EventDynamoDBStreamBatchSize:
+    Type: String
+    Description: "Size of event batch"
+    Default: 100
+
+  # FIXME: Need a Condition block for this.
+  EventDynamoDBStreamEnabled:
+    Type: String
+    Description: "If processing is enabled"
+    AllowedValues:
+      - True
+      - False
+    Default: True
+
+{%- elif cookiecutter.event_source == "kinesis" %}
+  EventKinesisStreamArn:
+    Type: String
+    Description: "ARN of stream"
+    #Default: <<required: STREAM_ARN>>
+
+  EventKinesisStreamStartingPosition:
+    Type: String
+    Description: "Stream starting position for function"
+    AllowedValues:
+      - 'LATEST'
+      - 'TRIM_HORIZON'
+    Default: 'LATEST'
+
+  EventKinesisStreamBatchSize:
+    Type: String
+    Description: "Size of event batch"
+    Default: 100
+
+  # FIXME: Need a Condition block for this.
+  EventKinesisStreamEnabled:
+    Type: String
+    Description: "If processing is enabled"
+    AllowedValues:
+      - True
+      - False
+    Default: True
+
+{%- elif cookiecutter.event_source == "s3" %}
+  EventS3Bucket:
+    Type: String
+    Description: "S3 bucket name"
+    #Default: <<required: BUCKET_NAME>>
+
+  EventS3EventsList:
+    Type: List
+    Description: "List of events to trigger on"
+    AllowedValues:
+      - s3:ObjectCreated:*
+      - s3:ObjectCreated:Put
+      - s3:ObjectCreated:Post
+      - s3:ObjectCreated:Copy
+      - s3:ObjectCreated:CompleteMultipartUpload
+      - s3:ObjectRemoved:*
+      - s3:ObjectRemoved:Delete
+      - s3:ObjectRemoved:DeleteMarkerCreated
+      - s3:ObjectRestore:Post
+      - s3:ObjectRestore:Completed
+      - s3:ReducedRedundancyLostObject
+    #Default:
+    #  - <<required: EVENT>>
+
+  #EventS3FilterRuleList:
+  #  Type: List
+  #  Description: "List of event filter rules."
+  #  Default:
+  #    - <<FILTER_RULE>>
+{%- elif cookiecutter.event_source == "schedule" %}
+  EventSchedule:
+    Type: String
+    Description: "event schedule"
+    #Default: <<required: SCHEDULE>>
+{%- elif cookiecutter.event_source == "sns" %}
+  EventSnsTopicArn:
+    Type: String
+    Description: "SNS Topic Arn"
+    #Default: <<required: SNS_TOPIC_ARN>>
+
+{%- elif cookiecutter.event_source == "sqs" %}
+  EventSqsQueueArn:
+    Type: String
+    Description: "ARN of stream"
+    #Default: <<required: QUEUE_ARN>>
+
+  EventSqsQueueBatchSize:
+    Type: String
+    Description: "Size of event batch"
+    Default: 10
+
+  # FIXME: Need a Condition block for this.
+  EventSqsQueueEnabled:
+    Type: String
+    Description: "If processing is enabled"
+    AllowedValues:
+      - True
+      - False
+    Default: True
+{%- endif %}
+{%- endif %}
+
+{% if cookiecutter.event_destination != "other" %}
+## Event destination configuration
+#
+# NOTE: The parameters here may not be an exhaustive list of possible
+# configuration. Refer to CloudFormation documentation for more.
+{%- if cookiecutter.event_destination == "dynamodb" %}
+  DdbHashKeyName:
+    Type: String
+    Description: "DDB table hash key name"
+    #Default: <<required: HASH_KEY_NAME>>
+
+  DdbHashKeyType:
+    Type: String
+    Description: "DDB table hash key name"
+    AllowedValues:
+      - "S"
+      - "N"
+      - "B"
+    #Default: <<required: HASH_KEY_TYPE>>
+
+  # Optional range key information
+  #DdbRangeKeyName:
+  #  Type: String
+  #  Description: "DDB table hash key name"
+  #  Default: <<required: RANGE_KEY_NAME>>
+
+  #DdbRangeKeyType:
+  #  Type: String
+  #  Description: "DDB table range key type"
+  #  AllowedValues:
+  #    - "S"
+  #    - "N"
+  #    - "B"
+  #  Default: <<required: RANGE_KEY_TYPE>>
+
+{%- elif cookiecutter.event_destination == "kinesis" %}
+  KinesisStreamRetentionHours:
+    Type: Number
+    Description: "Kinesis stream retention period in hours"
+    Default: 24
+
+  KinesisStreamShardCount:
+    Type: Number
+    Description: "Kinesis stream shard count"
+    #Default: <<required: SHARD_COUNT>>
+
+{%- elif cookiecutter.event_destination == "s3" %}
+  S3BucketAccessControl:
+    Type: String
+    Description: 'S3 bucket access control'
+    AllowedValues:
+      - 'Private'
+      - 'PublicRead'
+      - 'PublicReadWrite'
+      - 'AwsExecRead'
+      - 'AuthenticatedRead'
+      - 'BucketOwnerRead'
+      - 'BucketOwnerFullControl'
+      - 'LogDeliveryWrite'
+    Default: 'Private'
+
+  S3BucketVersioningStatus:
+    Type: String
+    Description: 'Bucket versioning status'
+    Default: 'Suspended'
+
+{%- elif cookiecutter.event_destination == "sqs" %}
+  SqsQueueDelaySeconds:
+    Type: Number
+    Description: "Sqs queue delayed delivery in seconds"
+    Default: 0
+
+  # FIXME: Not sure why this is failing
+  #SqsQueueFifoQueue:
+  #  Type: String
+  #  Description: "SQS queue FIFO queue"
+  #  AllowedValues:
+  #    - True
+  #    - False
+  #  Default: False
+
+  SqsQueueMessageRetentionPeriod:
+    Type: Number
+    Description: "SQS queue message retention period"
+    Default: 345600
+
+  SqsQueueReceiveMessageWaitTimeSeconds:
+    Type: Number
+    Description: "SQS queue polling length in seconds"
+    Default: 0
+
+  SqsQueueVisibilityTimeout:
+    Type: Number
+    Description: "SQS queue visibility timeout in seconds"
+    Default: 30
+
+{%- endif -%}
+{%- endif %}
+
+
+Globals:
+  Function:
+{%- if cookiecutter.enable_xray == "y" %}
+    Tracing: Active
+{%- endif %}
+
+
+Resources:
+  {{cookiecutter.function_name}}:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: "{{cookiecutter.function_description}}"
+      CodeUri: src/handlers/{{cookiecutter.function_name}}
+      Handler: index.handler
+      Runtime: nodejs10.x
+      MemorySize:
+        Ref: {{cookiecutter.function_name}}MemorySize
+      Timeout:
+        Ref: {{cookiecutter.function_name}}Timeout
+{%- if cookiecutter.dlq_type != "none" %}
+      DeadLetterQueue:
+{%- if cookiecutter.dlq_type == "sqs" %}
+        Type: 'SQS'
+        TargetArn:
+          Fn::GetAtt: {{cookiecutter.function_name}}DlqQueue.Arn
+{%- elif cookiecutter.dlq_type == "sns" %}
+        Type: 'SNS'
+        TargetArn:
+          Ref: {{cookiecutter.function_name}}DlqTopic
+{%- endif %}
+{%- endif %}
+{%- if cookiecutter.event_source != "other" %}
+      Events:
+{%- if cookiecutter.event_source == "apigateway" %}
+        Apig:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: RestApi
+            #Path: <<required: PATH>>
+            #Method: <<required: METHOD>>
+{%- elif cookiecutter.event_source == "cloudwatch-event" %}
+        CloudWatchEvent:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern: <<PATTERN_OBJECT>>
+{%- elif cookiecutter.event_source == "cloudwatch-logs" %}
+        CloudWatchLogs:
+          Type: CloudWatchLogs
+          Properties:
+            LogGroupName:
+              Ref: EventCloudwatchLogGroupName
+            #FilterPattern:
+            #  Ref: EventCloudwatchLogGroupFilterPattern
+{%- elif cookiecutter.event_source == "dynamodb" %}
+        DynamoDB:
+          Type: DynamoDB
+          Properties:
+            Stream:
+              Ref: EventDynamoDBStreamArn
+            StartingPosition:
+              Ref: EventDynamoDBStreamStartingPosition
+            BatchSize:
+              Ref: EventDynamoDBStreamBatchSize
+            Enabled:
+              Ref: EventDynamoDBStreamEnabled
+{%- elif cookiecutter.event_source == "kinesis" %}
+        Kinesis:
+          Type: Kinesis
+          Properties:
+            Stream:
+              Ref: EventKinesisStreamArn
+            StartingPosition:
+              Ref: EventKinesisStreamStartingPosition
+            BatchSize:
+              Ref: EventKinesisStreamBatchSize
+            Enabled:
+              Ref: EventKinesisStreamEnabled
+{%- elif cookiecutter.event_source == "s3" %}
+        S3:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: EventS3Bucket
+            Events:
+              Ref: EventS3EventsList
+            #Filter:
+            #  S3Key:
+            #    Ref: EventS3FilterRuleList
+{%- elif cookiecutter.event_source == "schedule" %}
+        Schedule:
+          Type: Schedule
+          Properties:
+            Schedule:
+              Ref: EventSchedule
+{%- elif cookiecutter.event_source == "sns" %}
+        SNS:
+          Type: SNS
+          Properties:
+            Topic:
+              Ref: EventSnsTopicArn
+            #FilterPolicy:
+            #  <<FILTER_POLICY>>
+{%- elif cookiecutter.event_source == "sqs" %}
+        SQS:
+          Type: SQS
+          Properties:
+            Queue:
+              Ref: EventSqsQueueArn
+            BatchSize:
+              Ref: EventSqsQueueBatchSize
+            Enabled:
+              Ref: EventSqsQueueEnabled
+{%- endif %}
+{%- endif %}
+
+{%- if cookiecutter.dlq_type != "none" %}
+{% if cookiecutter.dlq_type == "sqs" %}
+  {{cookiecutter.function_name}}DlqQueue:
+    Type: AWS::SQS::Queue
+{% elif cookiecutter.dlq_type == "sns" %}
+  {{cookiecutter.function_name}}DlqTopic:
+    Type: AWS::SNS::Topic
+{%- endif %}
+{%- endif %}
+
+{% if cookiecutter.event_source == "apigateway" %}
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: Environment
+      #DefinitionUri: swagger.yml
+{%- endif %}
+
+  {{cookiecutter.function_name}}Policy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: "root"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "ssm:GetParameters"
+            Resource: "*"
+{%- if cookiecutter.event_destination != "other" %}
+{%- if cookiecutter.event_destination == "dynamodb" %}
+          - Effect: "Allow"
+            Action:
+              - "dynanodb:<<DDB_ACTION>>"
+            Resource:
+              Fn::GetAtt:
+                - DynamoDBTable
+                - Arn
+{%- elif cookiecutter.event_destination == "kinesis" %}
+          - Effect: "Allow"
+            Action:
+              - "kinesis:<<KINESIS_ACTION>>"
+            Resource:
+              Fn::GetAtt:
+                - KinesisStream
+                - Arn
+{%- elif cookiecutter.event_destination == "s3" %}
+          - Effect: "Allow"
+            Action:
+              - "s3:<<S3_ACTION>>"
+            Resource:
+              Fn::GetAtt:
+                - S3Bucket
+                - Arn
+{%- elif cookiecutter.event_destination == "sns" %}
+          - Effect: "Allow"
+            Action:
+              - "sns:<<SNS_ACTION>>"
+            Resource:
+              Ref: SnsTopic
+{%- elif cookiecutter.event_destination == "sqs" %}
+          - Effect: "Allow"
+            Action:
+              - "sqs:<<SQS_ACTION>>"
+            Resource:
+              Fn::GetAtt:
+                - SqsQueue
+                - Arn
+{%- endif %}
+{%- endif %}
+      Roles:
+        # This role is created implicitly by SAM.
+        - Ref: {{cookiecutter.function_name}}Role
+
+{% if cookiecutter.event_destination != "other" %}
+{%- if cookiecutter.event_destination == "dynamodb" %}
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    # NOTE: Retain data by default
+    DeletionPolicy: 'Retain'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName:
+            Ref: DdbHashKeyName
+          AttributeType:
+            Ref: DdbHashKeyType
+        #- AttributeName:
+        #    Ref: DdbRangeKeyName
+        #  AttributeType:
+        #    Ref: DdbRangeKeyType
+      KeySchema:
+        - AttributeName:
+            Ref: DdbHashKeyName
+          KeyType: "HASH"
+        #- AttributeName:
+        #    Ref: DdbRangeKeyName
+        #  KeyType: "RANGE"
+      BillingMode: "PAY_PER_REQUEST"
+
+{%- elif cookiecutter.event_destination == "kinesis" %}
+  KinesisStream:
+    Type: AWS::Kinesis::Stream
+    RetentionPeriodHours:
+      Ref: KinesisStreamRetentionHours
+    ShardCount:
+      Ref: KinesisStreamShardCount
+
+{%- elif cookiecutter.event_destination == "s3" %}
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    # NOTE: Retain data by default
+    DeletionPolicy: 'Retain'
+    Properties:
+      AccessControl:
+        Ref: S3BucketAccessControl
+      VersioningConfiguration:
+        Status:
+          Ref: S3BucketVersioningStatus
+
+{%- elif cookiecutter.event_destination == "sns" %}
+  SnsTopic:
+    Type: AWS::SNS::Topic
+
+{%- elif cookiecutter.event_destination == "sqs" %}
+  SqsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      DelaySeconds:
+        Ref: SqsQueueDelaySeconds
+      # FIXME: Not working
+      #FifoQueue:
+      #  Ref: SqsQueueFifoQueue
+      MessageRetentionPeriod:
+        Ref: SqsQueueMessageRetentionPeriod
+      ReceiveMessageWaitTimeSeconds:
+        Ref: SqsQueueReceiveMessageWaitTimeSeconds
+      VisibilityTimeout:
+        Ref: SqsQueueVisibilityTimeout
+{%- endif %}
+{%- endif %}
+
+{% if cookiecutter.enable_cloudwatch_topic == "yes" %}
+  CloudWatchTopic:
+    Type: AWS::SNS::Topic
+{%- endif %}
+
+
+Outputs:
+{%- if cookiecutter.event_source == "apigateway" %}
+  RestApiRoot:
+    Description: "API Gateway endpoint URL for function"
+    Value:
+      Fn::Sub: "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-RestApiRoot"
+{%- endif %}
+
+{% if cookiecutter.event_destination != "other" %}
+{%- if cookiecutter.event_destination == "dynamodb" %}
+  DynamoDBTableArn:
+    Description: "ARN of DynamoDB table"
+    Value:
+      Fn::GetAtt: DynamoDBTable.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DynamoDBTableArn"
+
+  DynamoDBTableName:
+    Description: "Name of DynamoDB table"
+    Value:
+      Ref: DynamoDBTable
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-DynamoDBTableName"
+
+{%- elif cookiecutter.event_destination == "kinesis" %}
+  KinesisStreamArn:
+    Description: "ARN of Kinesis stream"
+    Value:
+      Fn::GetAtt: KinesisStream.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-KinesisStreamArn"
+
+  KinesisStreamName:
+    Description: "Name of Kinesis stream"
+    Value:
+      Ref: KinesisStream
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-KinesisStreamName"
+
+{%- elif cookiecutter.event_destination == "s3" %}
+  S3BucketArn:
+    Description: "ARN of S3 bucket"
+    Value:
+      Fn::GetAtt: S3Bucket.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketArn"
+
+  S3BucketDomainName:
+    Description: "Domain name of S3 bucket"
+    Value:
+      Fn::GetAtt: S3Bucket.DomainName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketDomainName"
+
+  S3BucketName:
+    Description: "Name of S3 bucket"
+    Value:
+      Ref: S3Bucket
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-S3BucketName"
+
+{%- elif cookiecutter.event_destination == "sns" %}
+  SnsTopicArn:
+    Description: "ARN of SNS topic"
+    Value:
+      Ref: SnsTopic
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-SnsTopicArn"
+
+  SnsTopiceName:
+    Description: "Name of SNS topic"
+    Value:
+      Fn::GetAtt: SnsTopic.TopicName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-SnsTopiceName"
+
+{%- elif cookiecutter.event_destination == "sqs" %}
+  SqsQueueArn:
+    Description: "ARN of SQS queue"
+    Value:
+      Fn::GetAtt: SqsQueue.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-SqsQueueArn"
+
+  SqsQueueName:
+    Description: "Name of SQS queue"
+    Value:
+      Fn::GetAtt: SqsQueue.QueueName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-SqsQueueName"
+
+  SqsQueueUrl:
+    Description: "Url of SQS queue"
+    Value:
+      Ref: SqsQueue
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-SqsQueueUrl"
+
+{%- endif %}
+{%- endif %}
+
+{% if cookiecutter.dlq_type != "none" %}
+{%- if cookiecutter.dlq_type == "sqs" %}
+  {{cookiecutter.function_name}}DlqQueueArn:
+    Description: "ARN of DLQ"
+    Value:
+      Fn::GetAtt: {{cookiecutter.function_name}}DlqQueue.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-{{cookiecutter.function_name}}DlqQueueArn"
+
+  {{cookiecutter.function_name}}DlqQueueName:
+    Description: "Name of DLQ"
+    Value:
+      Fn::GetAtt: {{cookiecutter.function_name}}DlqQueue.QueueName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-{{cookiecutter.function_name}}DlqQueueName"
+
+  {{cookiecutter.function_name}}DlqQueueUrl:
+    Description: "Url of DLQ"
+    Value:
+      Ref: {{cookiecutter.function_name}}DlqQueue
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-{{cookiecutter.function_name}}DlqQueueUrl"
+
+{%- elif cookiecutter.dlq_type == "sns" %}
+  {{cookiecutter.function_name}}DlqTopicArn:
+    Description: "ARN of DLQ topic"
+    Value:
+      Ref: {{cookiecutter.function_name}}DlqTopic
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-{{cookiecutter.function_name}}DlqTopicArn"
+
+  {{cookiecutter.function_name}}DlqTopicName:
+    Description: "Name of DLQ topic"
+    Value:
+      Fn::GetAtt: {{cookiecutter.function_name}}DlqTopic.TopicName
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-{{cookiecutter.function_name}}DlqTopicName"
+{%- endif %}
+{%- endif %}
+
+{% if cookiecutter.enable_cloudwatch_topic == "yes" %}
+  CloudWatchTopicArn:
+    Description: "ARN of CloudWatch topic"
+    Value:
+      Ref: CloudWatchTopic
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-CloudWatchTopicArn"
+{%- endif %}
+

@@ -1,0 +1,52 @@
+{
+  "service_name": "my-service-name",
+  "service_description": "Service Description",
+  "function_name": "MyFunctionName",
+  "function_description": "Function Description",
+  "license": [
+    "other",
+    "BSD-2-Clause",
+    "MIT",
+    "MIT-0"
+  ],
+  "copyright_holder": "Singlestone Consulting",
+  "author_name": "",
+  "author_email": "",
+  "year": "{% now 'utc', '%Y' %}",
+  "event_source": [
+    "other",
+    "apigateway",
+    "cloudwatch-event",
+    "cloudwatch-logs",
+    "dynamodb",
+    "kinesis",
+    "s3",
+    "schedule",
+    "sqs",
+    "sns"
+  ],
+  "event_destination": [
+    "other",
+    "dynamodb",
+    "kinesis",
+    "s3",
+    "sns",
+    "sqs"
+  ],
+  "dlq_type": [
+    "none",
+    "sqs",
+    "sns"
+  ],
+  "enable_xray": [
+    "no",
+    "yes"
+  ],
+  "enable_cloudwatch_topic": [
+    "no",
+    "yes"
+  ],
+  "_extensions": [
+    "jinja2_time.TimeExtension"
+  ]
+}
