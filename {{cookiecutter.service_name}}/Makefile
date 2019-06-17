@@ -7,7 +7,7 @@ dev: lint test
 # Verifications to run before sending a pull request
 pr: init dev
 
-ENV = ${USER}
+ENV ?= ${USER}
 AWS_ACCOUNT = $$(aws sts get-caller-identity | jq -r .Account)
 STACKNAME = $$(basename ${CURDIR})-$(ENV)
 BUCKET = $$(basename ${CURDIR})-package-bucket-$(ENV)-$(AWS_ACCOUNT)
