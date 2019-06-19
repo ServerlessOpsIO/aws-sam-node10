@@ -91,6 +91,10 @@ describe:
 	$(info Describing stack)
 	@aws cloudformation describe-stacks --stack-name $(STACKNAME) --output table --query 'Stacks[0]'
 
+resources:
+	$(info Describing stack resources)
+	@aws cloudformation describe-stack-resources --stack-name $(STACKNAME) --output table --query 'StackResources[*]'
+
 outputs:
 	$(info Displaying stack outputs)
 	@aws cloudformation describe-stacks --stack-name $(STACKNAME) --output table --query 'Stacks[0].Outputs'
