@@ -103,6 +103,12 @@ delete:
 	$(info Delete stack)
 	@aws cloudformation delete-stack --stack-name $(STACKNAME)
 
+unit-test:
+	npm run test:unit
+
+int-test:	
+	npm run test:int
+
 test: 
 	npm run test
 
