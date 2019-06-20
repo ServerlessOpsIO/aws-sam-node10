@@ -1,0 +1,21 @@
+{
+    "name": "{{cookiecutter.service_name}}",
+    "version": "1.0.0",
+    "description": "{{cookiecutter.service_description}}",
+    "scripts": {
+      "postinstall": "npm-run-all install:*",
+      "install:{{cookiecutter.function_name}}": "cd src/handlers/{{cookiecutter.function_name}} && npm install",
+      "start-api": "sam build && sam local start-api",
+  
+      "test": "npm-run-all test:unit test:int",
+      "test:unit": "npm-run-all test:unit:*",
+      "test:int": "npm-run-all -p -r start-api test:int-run",
+      "test:int-run": "sleep 6 && npm-run-all test:int:*",
+      
+      "test:unit:{{cookiecutter.function_name}}": "cd src/handlers/{{cookiecutter.function_name}} && npm run test:unit",
+      "test:int:{{cookiecutter.function_name}}": "cd src/handlers/{{cookiecutter.function_name}} && npm run test:int"
+    },
+    "devDependencies": {
+      "npm-run-all": "^4.0.2"
+    }
+  }

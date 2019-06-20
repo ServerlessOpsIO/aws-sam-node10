@@ -1,3 +1,5 @@
+const asyncStarterService = require("./lib/asyncStarterService")
+
 let response;
 
 /**
@@ -14,15 +16,25 @@ let response;
  */
 exports.handler = async (event, context) => {
     try {
-        // const ret = await axios(url);
+        let { message } = event.queryStringParameters;
+
+        if( !message ) {
+            throw({
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: "Please specify message to strip whitespaces from"
+                })
+            })
+        }
+
+        const ret = await asyncStarterService.stripWhitespaces(message);
         response = {
             'statusCode': 200,
             'body': JSON.stringify({
-                message: 'hello world',
+                message: ret,
             })
         }
     } catch (err) {
-        console.log(err);
         return err;
     }
 
