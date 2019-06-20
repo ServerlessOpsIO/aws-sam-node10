@@ -4,9 +4,16 @@
   "description": "{{cookiecutter.function_description}}",
   "main": "index.js",
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4",
+    "sinon": "^7.3.2",
+    "supertest": "^4.0.2"
+  },
   "scripts": {
-    "test": "mocha tests/unit/"
+    "test": "npm run test:unit & npm run test:int",
+    "test:unit": "mocha tests/unit/",
+    "test:int": "mocha tests/integration/ --timeout 7500"
   }
 }
 

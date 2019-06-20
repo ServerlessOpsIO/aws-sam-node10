@@ -290,8 +290,8 @@ Resources:
           Properties:
             RestApiId:
               Ref: RestApi
-            #Path: <<required: PATH>>
-            #Method: <<required: METHOD>>
+            #Path: <<required: PATH>> ex: /stripWhitespaces
+            #Method: <<required: METHOD>> ex: GET
 {%- elif cookiecutter.event_source == "cloudwatch-event" %}
         CloudWatchEvent:
           Type: CloudWatchEvent
