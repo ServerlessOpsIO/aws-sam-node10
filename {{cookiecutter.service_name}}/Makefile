@@ -77,15 +77,15 @@ event:
 
 build:
 	$(info Building application)
-	sam build
+	@sam build
 
 package: build
 	$(info Creating package)
-	sam package --profile ${AWS_PROFILE} --s3-bucket $(BUCKET) --output-template-file $(PACKAGED_TEMPLATE)
+	@sam package --profile ${AWS_PROFILE} --s3-bucket $(BUCKET) --output-template-file $(PACKAGED_TEMPLATE)
 
 deploy: bucket package
 	$(info Deploying to personal development stack)
-	sam deploy --parameter-overrides Environment=$(ENV) --profile ${AWS_PROFILE} --template-file $(PACKAGED_TEMPLATE) --stack-name $(STACKNAME) --capabilities CAPABILITY_IAM
+	@sam deploy --parameter-overrides Environment=$(ENV) --profile ${AWS_PROFILE} --template-file $(PACKAGED_TEMPLATE) --stack-name $(STACKNAME) --capabilities CAPABILITY_IAM
 
 describe:
 	$(info Describing stack)
@@ -108,13 +108,13 @@ delete:
 	@aws cloudformation delete-stack --stack-name $(STACKNAME)
 
 unit-test:
-	npm run test:unit
+	@npm run test:unit
 
 int-test:	
-	npm run test:int
+	@npm run test:int
 
-test: 
-	npm run test
+test:
+	@npm run test
 
 lint:
 	# Lint code
