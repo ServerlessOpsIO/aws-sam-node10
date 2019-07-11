@@ -12,7 +12,7 @@ export SERVICE ?= $(shell basename ${CURDIR})
 export STACKNAME = $(SERVICE)-$(ENV)
 
 AWS_ACCOUNT ?= $(shell aws sts get-caller-identity | jq -r .Account)
-BUCKET ?= $(shell basename ${CURDIR})-package-bucket-$(ENV)-$(AWS_ACCOUNT)
+BUCKET ?= $(shell basename ${CURDIR})-pkg-$(ENV)-$(AWS_ACCOUNT)
 PACKAGED_TEMPLATE = .aws-sam/packaged-template.yaml
 EVENT_SOURCE = {{cookiecutter.event_source}}
 
