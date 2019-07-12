@@ -16,6 +16,9 @@ BUCKET ?= $(shell basename ${CURDIR})-pkg-$(ENV)-$(AWS_ACCOUNT)
 PACKAGED_TEMPLATE = .aws-sam/packaged-template.yaml
 EVENT_SOURCE = {{cookiecutter.event_source}}
 
+CICD_STACKNAME = cicd-$(SERVICE)-$(ENV)
+CICD_TEMPLATE = pipeline.yaml
+
 .PHONY: build package clean
 
 bucket:
@@ -105,6 +108,34 @@ parameters:
 delete:
 	$(info Delete stack)
 	@aws cloudformation delete-stack --stack-name $(STACKNAME)
+
+pipeline-deploy:
+	$(info Deploying CI/CD stack)
+	@aws cloudformation deploy --parameter-overrides ServiceName=$(SERVICE) --template-file $(CICD_TEMPLATE) --stack-name $(CICD_STACKNAME) --capabilities CAPABILITY_IAM
+
+pipeline-trigger:
+	$(info Triggering CI/CD pipeline)
+	@aws codepipeline start-pipeline-execution --name $(STACKNAME)
+
+pipeline-describe:
+	$(info Describing CI/CD stack)
+	@aws cloudformation describe-stacks --stack-name $(CICD_STACKNAME) --output table --query 'Stacks[0]'
+
+pipeline-resources:
+	$(info Describing CI/CD stack resources)
+	@aws cloudformation describe-stack-resources --stack-name $(CICD_STACKNAME) --output table --query 'StackResources[*]'
+
+pipeline-outputs:
+	$(info Describing CI/CD stack outputs)
+	@aws cloudformation describe-stacks --stack-name $(CICD_STACKNAME) --output table --query 'Stacks[0].Outputs'
+
+pipeline-parameters:
+	$(info Describing CI/CD stack parameters)
+	@aws cloudformation describe-stacks --stack-name $(CICD_STACKNAME) --output table --query 'Stacks[0].Parameters'
+
+pipeline-delete:
+	$(info Deleting CI/CD pipeline)
+	@aws cloudformation delete-stack --stack-name $(CICD_STACKNAME)
 
 unit-test:
 	@npm run test:unit
