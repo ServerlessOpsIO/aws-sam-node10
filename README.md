@@ -76,3 +76,6 @@ Option | Description
 `enable_xray`               |   Enable X-Ray tracing
 `enable_cloudwatch_topic`   |   Create an SNS topic for CloudWatch alarms and events
 
+## Credits
+Initially developed for [SingleStone Consulting](https://www.singlestoneconsulting.com/) for a serverless application project.
+
